@@ -72,11 +72,13 @@ int main(int argc, char const *argv[])
         else cout << "ERROR reading from socket" << endl;;
         
         cout << "MESSAGE: " << endl;
-        cout << buffer << endl;
+        //cout << buffer << endl;
 
-        string request(buffer);
+        //string request(buffer);
         cout << "PARSED REQUEST: " << endl;
-        cout << parseHttp(request) << endl;
+        //cout << request << endl;
+        //cout << parseHttp(request) << endl;
+        parseHttp(buffer);
 
         close(clientSocket);
     }
