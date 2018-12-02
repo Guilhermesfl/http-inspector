@@ -16,8 +16,9 @@ int main(int argc, char const *argv[])
 {
     int defSocket = PROXY_PORT, proxySocket, clientSocket;
     socklen_t clilen;
-    char buffer[256];
+    char buffer[4096];
     struct sockaddr_in proxyAddr, cli_addr;;
+
 
     if(argv[1] && argv[2]) {
         if (!strcmp(argv[1], "-p")) {
@@ -30,42 +31,54 @@ int main(int argc, char const *argv[])
     // SOCK_STREAM - TCP
     // 0 - IP protocol
     proxySocket = socket(AF_INET, SOCK_STREAM, 0);
-    if (proxySocket <= 0) {
-        cout << "Error when creating socket";
+    if (proxySocket > 0) cout << "Socket created on port: " << defSocket << endl;
+    else {
+        cout << "Error creating socket" << endl;
         return -1;
     };
 
+    // Proxy config
     proxyAddr.sin_family = AF_INET; 
     proxyAddr.sin_addr.s_addr = INADDR_ANY; 
     proxyAddr.sin_port = htons( PROXY_PORT );
 
-    // Binds socket to the port 8080
-    if (bind(proxySocket, (struct sockaddr *)&proxyAddr, sizeof(proxyAddr)) < 0) { 
-        cout << "Error when binding socket";
+    // Bind socket to the port 8080
+    if (bind(proxySocket, (struct sockaddr *)&proxyAddr, sizeof(proxyAddr)) == 0) cout << "Socket binding: success" << endl;
+    else { 
+        cout << "Error when binding socket" << endl;
         return -1;
     } 
+    cout << "Socket has been cofigured" << endl;
 
-    listen(proxySocket,5);
+    
+    while(1)
+    {        
+        listen(proxySocket,10);
+        cout << "Socket listening" << endl;
 
-    // The accept() call actually accepts an incoming connection
-    clilen = sizeof(cli_addr);
-    clientSocket = accept(proxySocket, (struct sockaddr *) &cli_addr, &clilen);
-    if (clientSocket < 0) cout << "ERROR on accept" << endl;
+        // The accept() call actually accepts an incoming connection
+        clilen = sizeof(cli_addr);
+        clientSocket = accept(proxySocket, (struct sockaddr *) &cli_addr, &clilen);
 
-    printf("server: got connection from %s port %d\n", inet_ntoa(cli_addr.sin_addr), ntohs(cli_addr.sin_port));
+        if (clientSocket > 0) cout << "Proxy received connection" << endl;
+        else cout << "ERROR on accept" << endl;
 
+        // Connection received
+        cout << "FROM: " << inet_ntoa(cli_addr.sin_addr) << endl;
+        cout << "PORT: " << ntohs(cli_addr.sin_port) << endl;
 
-    // This send() function sends the 13 bytes of the string to the new socket
-    send(clientSocket, "Hello, world!\n", 13, 0);
-
-    bzero(buffer,256);
-
-    int n = read(clientSocket,buffer,255);
-    if (n < 0) cout << "ERROR reading from socket" << endl;;
-    printf("Here is the message: %s\n",buffer);
+        int n = recv(clientSocket, buffer, 4096, 0);
+        if (n > 0) cout << "Socket received message" << endl;
+        else cout << "ERROR reading from socket" << endl;;
+        
+        cout << "MESSAGE: " << endl;
+        cout << buffer << endl;
+        
+        close(clientSocket);
+        
+    }
+    
 
     close(proxySocket);
-    close(clientSocket);
-
     return 0;
 }
