@@ -76,7 +76,7 @@ int main(int argc, char const *argv[])
             cout << buffer << endl;
 
             cout << "PARSED REQUEST: " << endl;
-            string teste = sendHttpRequest(parseHttp(buffer));
+            string teste = sendHttpRequest(parseHttp(buffer),buffer);
             cout << requestParsed.host << endl;
             
             close(clientSocket);

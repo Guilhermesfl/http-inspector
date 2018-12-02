@@ -51,13 +51,16 @@ httpParsed parseHttp (string bufferRequest) {
     return parsedRequest;
 }
 
-string sendHttpRequest(httpParsed request) {
+string sendHttpRequest(httpParsed request, string bufferRequest) {
     int clientSocket;
     char buffer[4096];
     socklen_t clilen;
     const char *c = request.host.c_str();
+    const char *url = request.url.c_str();
+    const char *bRequest = bufferRequest.c_str();
     struct sockaddr_in serverAddress;
-    struct hostent *server = gethostbyname(c);
+    struct hostent *server;
+    FILE * httpResponse;
 
     clientSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (clientSocket >= 0) cout << "[PROXY] Client socket create on port: " << CLIENT_PORT << endl; 
@@ -75,8 +78,34 @@ string sendHttpRequest(httpParsed request) {
          (char *)&serverAddress.sin_addr.s_addr,
          server->h_length);
     serverAddress.sin_port = htons(CLIENT_PORT);
+
     if (connect(clientSocket, (struct sockaddr *) &serverAddress, sizeof(serverAddress)) >= 0);
     else cout << "[PROXY] Error connecting to server" << endl;
+
+    if(write(clientSocket, bRequest, strlen(bRequest)) > 0) cout << "[PROXY] Sucessfully written on socket." << endl;
+    else cout << "ERROR writing on socket";
+
+    httpResponse = fopen("response.txt","w+");
+    if(httpResponse == NULL) cout << "ERROR AO CRIAR ARQUIVO" << endl;
+
+    while(1)
+    {
+    	bzero(buffer, sizeof(buffer));
+
+    	int n = recv(clientSocket, buffer, 4096, 0);
+
+    	cout << "RESPONSE: " << endl;
+    	cout << buffer << endl;
+    	
+        if (n <= 0)
+        {
+        	cout << "[PROXY ] Error receiving response from socket" << endl;
+        	exit(-1);
+        }
+        else fputs(buffer, httpResponse);
+
+
+    }
     
     // printf("Please enter the message: ");
     // bzero(buffer,256);
@@ -90,7 +119,8 @@ string sendHttpRequest(httpParsed request) {
     //      error("ERROR reading from socket");
     // printf("%s\n", buffer);
     close(clientSocket);
-    return 0;
+    fclose(httpResponse);
 
+    return 0;
 
 }

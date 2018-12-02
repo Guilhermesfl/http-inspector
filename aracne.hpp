@@ -14,4 +14,4 @@ class httpParsed {
 };
 
 httpParsed parseHttp(string bufferRequest);
-string sendHttpRequest(httpParsed request);
+string sendHttpRequest(httpParsed request, string bufferRequest);
