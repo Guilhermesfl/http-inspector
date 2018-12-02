@@ -85,7 +85,7 @@ string sendHttpRequest(httpParsed request, string bufferRequest) {
     if(write(clientSocket, bRequest, strlen(bRequest)) > 0) cout << "[PROXY] Sucessfully written on socket." << endl;
     else cout << "ERROR writing on socket";
 
-    httpResponse = fopen("response.bin","w+");
+    httpResponse = fopen("response.txt","w+");
     if(httpResponse == NULL) cout << "ERROR AO CRIAR ARQUIVO" << endl;
 
     while(1)
@@ -94,12 +94,9 @@ string sendHttpRequest(httpParsed request, string bufferRequest) {
 
     	int n = recv(clientSocket, buffer, 4096, 0);
 
-    	cout << "RESPONSE: " << endl;
-    	cout << buffer << endl;
-
         if (n <= 0)
         {
-        	cout << "[PROXY ] Error receiving response from socket" << endl;
+        	cout << "[PROXY] End of response transmission" << endl;
         	break;
         }
         else fputs(buffer, httpResponse);
