@@ -8,6 +8,7 @@
 #include <netinet/in.h>
 #include <string.h>
 #include <arpa/inet.h>
+#include <netdb.h>
 #define PROXY_PORT 8228
 
 using namespace std;
@@ -25,11 +26,7 @@ int main(int argc, char const *argv[])
             defSocket = atoi(argv[2]);
         }
     }
-    
-    // First step - Create a socket
-    // AF_INET - IPv4 protocol
-    // SOCK_STREAM - TCP
-    // 0 - IP protocol
+
     proxySocket = socket(AF_INET, SOCK_STREAM, 0);
     if (proxySocket > 0) cout << "Socket created on port: " << defSocket << endl;
     else {
@@ -52,35 +49,41 @@ int main(int argc, char const *argv[])
 
     
     while(1)
-    {        
-        listen(proxySocket,10);
-        cout << "Socket listening" << endl;
-
-        // The accept() call actually accepts an incoming connection
-        clilen = sizeof(cli_addr);
-        clientSocket = accept(proxySocket, (struct sockaddr *) &cli_addr, &clilen);
-
-        if (clientSocket > 0) cout << "Proxy received connection" << endl;
-        else cout << "ERROR on accept" << endl;
-
-        // Connection received
-        cout << "FROM: " << inet_ntoa(cli_addr.sin_addr) << endl;
-        cout << "PORT: " << ntohs(cli_addr.sin_port) << endl;
-
-        int n = recv(clientSocket, buffer, 4096, 0);
-        if (n > 0) cout << "Socket received message" << endl;
-        else cout << "ERROR reading from socket" << endl;;
+    {   
+        string c;
+        cin >> c;
         
-        cout << "MESSAGE: " << endl;
-        //cout << buffer << endl;
+        if (c == "n") {
+            httpParsed requestParsed;
+            listen(proxySocket,10);
+            cout << "[PROXY] Socket listening..." << endl;
 
-        //string request(buffer);
-        cout << "PARSED REQUEST: " << endl;
-        //cout << request << endl;
-        //cout << parseHttp(request) << endl;
-        parseHttp(buffer);
+            // The accept() call actually accepts an incoming connection
+            clilen = sizeof(cli_addr);
+            clientSocket = accept(proxySocket, (struct sockaddr *) &cli_addr, &clilen);
 
-        close(clientSocket);
+            if (clientSocket > 0) cout << "[PROXY] Received connection..." << endl;
+            else cout << "ERROR on accept" << endl;
+
+            // Connection received
+            // cout << "FROM: " << inet_ntoa(cli_addr.sin_addr) << endl;
+            // cout << "PORT: " << ntohs(cli_addr.sin_port) << endl;
+
+            int n = recv(clientSocket, buffer, 4096, 0);
+            if (n <= 0) cout << "[PROXY ] Error receiving request from socket" << endl;;
+            
+            cout << "[PROXY] Request received: " << endl;
+            cout << buffer << endl;
+
+            cout << "PARSED REQUEST: " << endl;
+            string teste = sendHttpRequest(parseHttp(buffer));
+            cout << requestParsed.host << endl;
+            
+            close(clientSocket);
+        } else {
+            break;
+        }
+             
     }
     
     close(proxySocket);

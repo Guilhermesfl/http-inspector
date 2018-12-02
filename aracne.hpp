@@ -5,4 +5,13 @@
 
 using namespace std;
 
-string parseHttp(string bufferRequest);
+class httpParsed {
+    public:
+        string method;
+        string url;
+        string host;
+        string httpVersion; 
+};
+
+httpParsed parseHttp(string bufferRequest);
+string sendHttpRequest(httpParsed request);
