@@ -73,12 +73,15 @@ int main(int argc, char const *argv[])
         
         cout << "MESSAGE: " << endl;
         cout << buffer << endl;
-        
+
+        string request(buffer);
+        cout << "PARSED REQUEST: " << endl;
+        cout << parseHttp(request) << endl;
+
         close(clientSocket);
-        
     }
     
-
     close(proxySocket);
+
     return 0;
 }

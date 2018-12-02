@@ -1,6 +1,8 @@
-class aracne {
+#include <iostream>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
 
-    public:
-        
+using namespace std;
 
-};
+string parseHttp(string bufferRequest);
