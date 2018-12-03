@@ -18,7 +18,8 @@ int main(int argc, char const *argv[])
     int defSocket = PROXY_PORT, proxySocket, clientSocket;
     socklen_t clilen;
     char buffer[4096];
-    struct sockaddr_in proxyAddr, cli_addr;;
+    struct sockaddr_in proxyAddr, cli_addr;
+    httpParsed parsedHttp;
 
 
     if(argv[1] && argv[2]) {
@@ -74,12 +75,22 @@ int main(int argc, char const *argv[])
             
             cout << "[PROXY] Request received: " << endl;
             cout << buffer << endl;
-            saveToFile(buffer, 1);
+
+            parsedHttp = parseHttp(buffer);
+
+            saveToFile(buffer, 1, parsedHttp);
 
 
-            cout << "PARSED REQUEST: " << endl;
-            string teste = sendHttpRequest(parseHttp(buffer),buffer);
-            cout << requestParsed.host << endl;
+            // cout << "PARSED REQUEST: " << endl;
+            // cout << requestParsed.host << endl;
+
+            if (!isCached(parsedHttp.url)) {
+                cout << "[PROXY] Request not cached. Sending request to server... " << endl;
+                string teste = sendHttpRequest(parsedHttp,buffer);
+            } else {
+                cout << "[PROXY] Request found in cached. Responding to client ... " << endl;
+            }
+            
             
             close(clientSocket);
         } else {

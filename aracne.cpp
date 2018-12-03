@@ -6,6 +6,7 @@
 #include <iterator>
 #include <vector>
 #include <netdb.h>
+#include <algorithm>
 
 #define CLIENT_PORT 80
 
@@ -120,17 +121,31 @@ string sendHttpRequest(httpParsed request, string bufferRequest) {
 
 }
 
-void saveToFile(string toSave, int type) {
+void saveToFile(string toSave, int type, httpParsed parsedHttp) {
 	FILE * fp;
 	const char *string = toSave.c_str();
 
+    replace( parsedHttp.url.begin(), parsedHttp.url.end(), '/', '_');
+
 	if (type == 1) {
-		fp = fopen("request.txt","w+");
+		fp = fopen(parsedHttp.url.c_str(),"w+");
 	} else if (type == 2) {
-		fp = fopen("response.txt","w+");
+		fp = fopen(parsedHttp.url.c_str(),"w+");
 	}
 
 	fputs(string, fp);
 
 	fclose(fp);
+}
+
+bool isCached(string requestUrl) {
+    
+    FILE * fp;
+
+    replace( requestUrl.begin(), requestUrl.end(), '/', '_');
+    fp = fopen(requestUrl.c_str(),"w+");
+    
+    if (fp) return true;
+    else return false;
+    
 }

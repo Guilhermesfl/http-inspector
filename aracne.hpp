@@ -15,4 +15,5 @@ class httpParsed {
 
 httpParsed parseHttp(string bufferRequest);
 string sendHttpRequest(httpParsed request, string bufferRequest);
-void saveToFile(string toSave, int type);
+void saveToFile(string toSave, int type, httpParsed parsedHttp);
+bool isCached(string requestUrl);
