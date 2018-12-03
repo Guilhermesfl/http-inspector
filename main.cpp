@@ -74,6 +74,8 @@ int main(int argc, char const *argv[])
             
             cout << "[PROXY] Request received: " << endl;
             cout << buffer << endl;
+            saveToFile(buffer, 1);
+
 
             cout << "PARSED REQUEST: " << endl;
             string teste = sendHttpRequest(parseHttp(buffer),buffer);

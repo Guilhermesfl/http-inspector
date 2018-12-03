@@ -56,14 +56,13 @@ string sendHttpRequest(httpParsed request, string bufferRequest) {
     char buffer[4096];
     socklen_t clilen;
     const char *c = request.host.c_str();
-    const char *url = request.url.c_str();
     const char *bRequest = bufferRequest.c_str();
     struct sockaddr_in serverAddress;
     struct hostent *server;
     FILE * httpResponse;
 
     clientSocket = socket(AF_INET, SOCK_STREAM, 0);
-    if (clientSocket >= 0) cout << "[PROXY] Client socket create on port: " << CLIENT_PORT << endl; 
+    if (clientSocket >= 0) cout << "[PROXY] Client socket created on port: " << CLIENT_PORT << endl; 
     else cout << "ERROR opening socket" << endl;
 
     server = gethostbyname(c);
@@ -82,11 +81,10 @@ string sendHttpRequest(httpParsed request, string bufferRequest) {
     if (connect(clientSocket, (struct sockaddr *) &serverAddress, sizeof(serverAddress)) >= 0);
     else cout << "[PROXY] Error connecting to server" << endl;
 
-    if(write(clientSocket, bRequest, strlen(bRequest)) > 0) cout << "[PROXY] Sucessfully written on socket." << endl;
-    else cout << "ERROR writing on socket";
+    if(write(clientSocket, bRequest, strlen(bRequest)) <= 0) cout << "ERROR writing on socket" << endl;
 
     httpResponse = fopen("response.txt","w+");
-    if(httpResponse == NULL) cout << "ERROR AO CRIAR ARQUIVO" << endl;
+    if(httpResponse == NULL) cout << "ERROR while creating file" << endl;
 
     while(1)
     {
@@ -120,4 +118,19 @@ string sendHttpRequest(httpParsed request, string bufferRequest) {
 
     return 0;
 
+}
+
+void saveToFile(string toSave, int type) {
+	FILE * fp;
+	const char *string = toSave.c_str();
+
+	if (type == 1) {
+		fp = fopen("request.txt","w+");
+	} else if (type == 2) {
+		fp = fopen("response.txt","w+");
+	}
+
+	fputs(string, fp);
+
+	fclose(fp);
 }
