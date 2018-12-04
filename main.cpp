@@ -40,7 +40,7 @@ int main(int argc, char const *argv[])
     proxyAddr.sin_addr.s_addr = INADDR_ANY; 
     proxyAddr.sin_port = htons( PROXY_PORT );
 
-    // Bind socket to the port 8080
+    // Bind socket to the port 8228
     if (bind(proxySocket, (struct sockaddr *)&proxyAddr, sizeof(proxyAddr)) == 0) cout << "Socket binding: success" << endl;
     else { 
         cout << "Error when binding socket" << endl;
@@ -80,16 +80,22 @@ int main(int argc, char const *argv[])
 
             saveToFile(buffer, 1, parsedHttp);
 
+            string teste = sendHttpRequest(parsedHttp,buffer);
+
+
+            cout << "RESPONSE" << endl;
+            cout << teste << endl;
+
 
             // cout << "PARSED REQUEST: " << endl;
             // cout << requestParsed.host << endl;
 
-            if (!isCached(parsedHttp.url)) {
-                cout << "[PROXY] Request not cached. Sending request to server... " << endl;
-                string teste = sendHttpRequest(parsedHttp,buffer);
-            } else {
-                cout << "[PROXY] Request found in cached. Responding to client ... " << endl;
-            }
+            // if (!isCached(parsedHttp.url)) {
+            //     cout << "[PROXY] Request not cached. Sending request to server... " << endl;
+            //     string teste = sendHttpRequest(parsedHttp,buffer);
+            // } else {
+            //     cout << "[PROXY] Request found in cache. Responding to client ... " << endl;
+            // }
             
             
             close(clientSocket);

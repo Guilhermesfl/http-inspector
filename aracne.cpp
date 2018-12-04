@@ -82,25 +82,21 @@ string sendHttpRequest(httpParsed request, string bufferRequest) {
     if (connect(clientSocket, (struct sockaddr *) &serverAddress, sizeof(serverAddress)) >= 0);
     else cout << "[PROXY] Error connecting to server" << endl;
 
-    if(write(clientSocket, bRequest, strlen(bRequest)) <= 0) cout << "ERROR writing on socket" << endl;
+    char newRequest[250] = "GET / HTTP/1.1\r\nHost: ";
+    strcat(newRequest, c);
+    strcat(newRequest, "\r\n\r\n\r\n");
+
+    if(write(clientSocket, newRequest, strlen(newRequest)) <= 0) cout << "ERROR writing on socket" << endl;
 
     httpResponse = fopen("response.txt","w+");
     if(httpResponse == NULL) cout << "ERROR while creating file" << endl;
 
-    while(1)
+    bzero(buffer, sizeof(buffer));
+
+    while(recv(clientSocket, buffer, 4095, 0) != 0) //atenção ao tamanho do buffer ***
     {
-    	bzero(buffer, sizeof(buffer));
-
-    	int n = recv(clientSocket, buffer, 4096, 0);
-
-        if (n <= 0)
-        {
-        	cout << "[PROXY] End of response transmission" << endl;
-        	break;
-        }
-        else fputs(buffer, httpResponse);
-
-
+       	fputs(buffer, httpResponse);
+       	bzero(buffer, sizeof(buffer));
     }
     
     // printf("Please enter the message: ");
@@ -143,9 +139,12 @@ bool isCached(string requestUrl) {
     FILE * fp;
 
     replace( requestUrl.begin(), requestUrl.end(), '/', '_');
-    fp = fopen(requestUrl.c_str(),"w+");
+    fp = fopen(requestUrl.c_str(),"r");
     
-    if (fp) return true;
+    if (fp) {
+    	fclose(fp);
+    	return true;
+    }
     else return false;
     
 }
