@@ -1,4 +1,5 @@
 #include "aracne.hpp"
+#include <iostream>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,6 +8,8 @@
 #include <vector>
 #include <netdb.h>
 #include <algorithm>
+#include <fstream>
+#include <streambuf>
 
 #define CLIENT_PORT 80
 
@@ -135,4 +138,24 @@ bool isCached(string requestUrl) {
     	return true;
     } else return false;
     
+}
+
+void spider(string filename, string hostname) {
+    
+    unsigned int currrentLine = 0;
+    string line;
+    ifstream t("responses/" + filename);
+    cout << filename << " and " << hostname << endl;
+    if (t) {
+        while(getline(t, line)) { 
+            // cout << line << endl;
+            currrentLine++;
+            if (line.find("http://" + hostname, 0) !=string::npos) {
+                // cout << "found: " << hostname << "line: " << currrentLine << endl;
+            }
+        }
+    } else {
+        cout << "[DUMP] Dump error! Could not open response file!" << endl;
+    }
+    cout << "[DUMP] Finished dumping!" << endl;
 }

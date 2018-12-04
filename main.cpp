@@ -84,17 +84,21 @@ int main(int argc, char const *argv[])
             // Saves the request to a txt file
             saveToFile(buffer, 1, parsedHttp);
 
-            cout << "CHOOSE WHAT TO DO WITH THE REQUEST:" << endl;
+            cout << "[PROXY] CHOOSE WHAT TO DO WITH THE REQUEST:" << endl;
             cout << "1- Send without editing" << endl;
             cout << "2- Edit then send" << endl;
 
             cin >> choice;
 
             if (choice == 2) {
-                string filename = strcpy((char *) &filename, (char *) &parsedHttp.url);
+                string filename = parsedHttp.url;
                 replace( filename.begin(), filename.end(), '/', '_');
-                filename = "./requests/" + filename;
-                system(("nano "+filename).c_str());
+                string cmd = "vim requests/" + filename; 
+                const char *c = cmd.c_str();
+                system(c);
+                ifstream t("requests/" + filename);
+                string str((istreambuf_iterator<char>(t)), istreambuf_iterator<char>());
+                sprintf(buffer, "%.4s", str.c_str());
             }
 
             if(!isCached(parsedHttp.url)) {
@@ -105,14 +109,33 @@ int main(int argc, char const *argv[])
                 cout << "[PROXY] Request is cached. Sending to client ..." << endl;
             }
             replace( parsedHttp.url.begin(), parsedHttp.url.end(), '/', '_');
-            ifstream t(parsedHttp.url);
-            string str((istreambuf_iterator<char>(t)), istreambuf_iterator<char>());
-            send(clientSocket , str.c_str() , strlen(str.c_str()) , 0 );
-            cout << "Data sent to client" << endl;
-            // cout << str << endl;
-            // saveToFile(buffer, 1, parsedHttp);
-            // cout << "PARSED REQUEST: " << endl;
-            // cout << requestParsed.host << endl;
+
+            cout << "[PROXY] CHOOSE WHAT TO DO WITH THE RESPONSE:" << endl;
+            cout << "1- Return to client without editing" << endl;
+            cout << "2- Edit then send" << endl;
+            cout << "3- SPIDER" << endl;
+
+            cin >> choice;
+
+            
+            if (choice == 2 || choice == 1) {
+                if (choice == 2) {
+                    string filename = parsedHttp.url;
+                    replace( filename.begin(), filename.end(), '/', '_');
+                    string cmd = "vim responses/" + filename; 
+                    const char *c = cmd.c_str();
+                    system(c);
+                }
+                ifstream t("responses/" + parsedHttp.url);
+                string str((istreambuf_iterator<char>(t)), istreambuf_iterator<char>());
+                send(clientSocket , str.c_str() , strlen(str.c_str()) , 0 );
+                cout << "Data sent to client" << endl;
+            } else {
+                string filename = parsedHttp.url;
+                replace( filename.begin(), filename.end(), '/', '_');
+                spider(filename, parsedHttp.host);
+            }
+            
             
             close(clientSocket);
         } else {
