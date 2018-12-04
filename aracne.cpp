@@ -96,7 +96,6 @@ string sendHttpRequest(httpParsed request, string bufferRequest) {
 
     while(recv(clientSocket, buffer, 4095, 0) != 0) //atenção ao tamanho do buffer ***
     {
-        cout << "TESTE" << endl;
        	fputs(buffer, httpResponse);
        	bzero(buffer, sizeof(buffer));
     }
@@ -115,7 +114,7 @@ string sendHttpRequest(httpParsed request, string bufferRequest) {
     close(clientSocket);
     fclose(httpResponse);
 
-    return "FUNCIONOU ANIMAL";
+    return request.url;
 
 }
 

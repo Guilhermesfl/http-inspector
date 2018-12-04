@@ -9,6 +9,8 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <fstream>
+#include <streambuf>
 #define PROXY_PORT 8228
 
 using namespace std;
@@ -77,11 +79,13 @@ int main(int argc, char const *argv[])
 
             // saveToFile(buffer, 1, parsedHttp);
 
-            string teste = sendHttpRequest(parsedHttp,buffer);
-
-
+            string filename = sendHttpRequest(parsedHttp,buffer);
+            ifstream t(filename);
+            string str((istreambuf_iterator<char>(t)),
+                istreambuf_iterator<char>());
+            
             cout << "RESPONSE" << endl;
-            cout << teste << endl;
+            cout << str << endl;
 
 
             // cout << "PARSED REQUEST: " << endl;
