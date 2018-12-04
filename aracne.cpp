@@ -88,13 +88,15 @@ string sendHttpRequest(httpParsed request, string bufferRequest) {
 
     if(write(clientSocket, newRequest, strlen(newRequest)) <= 0) cout << "ERROR writing on socket" << endl;
 
-    httpResponse = fopen("response.txt","w+");
-    if(httpResponse == NULL) cout << "ERROR while creating file" << endl;
+    replace( request.url.begin(), request.url.end(), '/', '_');
+    httpResponse = fopen(request.url.c_str(),"w+");
+    if(!httpResponse) cout << "ERROR while creating file" << endl;
 
     bzero(buffer, sizeof(buffer));
 
     while(recv(clientSocket, buffer, 4095, 0) != 0) //atenção ao tamanho do buffer ***
     {
+        cout << "TESTE" << endl;
        	fputs(buffer, httpResponse);
        	bzero(buffer, sizeof(buffer));
     }
@@ -113,7 +115,7 @@ string sendHttpRequest(httpParsed request, string bufferRequest) {
     close(clientSocket);
     fclose(httpResponse);
 
-    return 0;
+    return "FUNCIONOU ANIMAL";
 
 }
 

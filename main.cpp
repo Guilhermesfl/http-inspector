@@ -48,12 +48,9 @@ int main(int argc, char const *argv[])
     } 
     cout << "Socket has been cofigured" << endl;
 
-    
+    string c = "n";
     while(1)
     {   
-        string c;
-        cin >> c;
-        
         if (c == "n") {
             httpParsed requestParsed;
             listen(proxySocket,10);
@@ -78,7 +75,7 @@ int main(int argc, char const *argv[])
 
             parsedHttp = parseHttp(buffer);
 
-            saveToFile(buffer, 1, parsedHttp);
+            // saveToFile(buffer, 1, parsedHttp);
 
             string teste = sendHttpRequest(parsedHttp,buffer);
 
@@ -97,12 +94,11 @@ int main(int argc, char const *argv[])
             //     cout << "[PROXY] Request found in cache. Responding to client ... " << endl;
             // }
             
-            
             close(clientSocket);
         } else {
             break;
         }
-             
+        cin >> c;
     }
     
     close(proxySocket);

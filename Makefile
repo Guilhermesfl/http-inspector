@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = 
+CXXFLAGS = -g
 DEPS = aracne.hpp
 
 %.o: %.c $(DEPS)
