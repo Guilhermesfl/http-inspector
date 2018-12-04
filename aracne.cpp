@@ -12,6 +12,11 @@
 
 using namespace std;
 
+/**
+ * 
+ * Parses Http to extrat some fields
+ * 
+ * */
 httpParsed parseHttp (string bufferRequest) {
 
 	// FILE * request;
@@ -33,26 +38,15 @@ httpParsed parseHttp (string bufferRequest) {
         i++;
     }
 
-	// request = fopen("request.txt","w+");
-    // method = bufferRequest.substr(0, bufferRequest.find(' '));
-	//fputs(&bufferRequest[0], request);
-
-	// hostPosition = strstr(&bufferRequest[0], "www.");
-
-	// while(*(hostPosition) != '\n' && *(hostPosition) != '\0')
-	// {
-	// 	strncat(hostURL, hostPosition, 1);
-	// 	hostPosition++;
-	// }
-
-	// fputs(&hostURL[0], request);
-
-	// fclose(request);
-
     return parsedRequest;
 }
 
-string sendHttpRequest(httpParsed request, string bufferRequest) {
+/**
+ * 
+ * Sends http GET request to server
+ * 
+ * */
+void sendHttpRequest(httpParsed request, string bufferRequest) {
     int clientSocket;
     char buffer[4096];
     socklen_t clilen;
@@ -94,27 +88,16 @@ string sendHttpRequest(httpParsed request, string bufferRequest) {
 
     bzero(buffer, sizeof(buffer));
 
+    cout << "[PROXY] Receiving response from server" << endl;
     while(recv(clientSocket, buffer, 4095, 0) != 0) //atenção ao tamanho do buffer ***
     {
+        cout << ".";
        	fputs(buffer, httpResponse);
        	bzero(buffer, sizeof(buffer));
     }
-    
-    // printf("Please enter the message: ");
-    // bzero(buffer,256);
-    // fgets(buffer,255,stdin);
-    // n = write(clientSocket, buffer, strlen(buffer));
-    // if (n < 0) 
-    //      error("ERROR writing to socket");
-    // bzero(buffer,256);
-    // n = read(clientSocket, buffer, 255);
-    // if (n < 0) 
-    //      error("ERROR reading from socket");
-    // printf("%s\n", buffer);
+    cout << "[PROXY] Response received" << endl;
     close(clientSocket);
     fclose(httpResponse);
-
-    return request.url;
 
 }
 
@@ -135,6 +118,11 @@ void saveToFile(string toSave, int type, httpParsed parsedHttp) {
 	fclose(fp);
 }
 
+/**
+ * 
+ * Function verifies if request has its response cached
+ * 
+ * */
 bool isCached(string requestUrl) {
     
     FILE * fp;
@@ -145,7 +133,6 @@ bool isCached(string requestUrl) {
     if (fp) {
     	fclose(fp);
     	return true;
-    }
-    else return false;
+    } else return false;
     
 }

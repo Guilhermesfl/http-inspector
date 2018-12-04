@@ -73,10 +73,6 @@ int main(int argc, char const *argv[])
             if (clientSocket > 0) cout << "[PROXY] Received connection..." << endl;
             else cout << "ERROR on accept" << endl;
 
-            // Connection received
-            // cout << "FROM: " << inet_ntoa(cli_addr.sin_addr) << endl;
-            // cout << "PORT: " << ntohs(cli_addr.sin_port) << endl;
-
             int n = recv(clientSocket, buffer, 4096, 0);
             if (n <= 0) cout << "[PROXY ] Error receiving request from socket" << endl;;
             
@@ -94,34 +90,29 @@ int main(int argc, char const *argv[])
 
             cin >> choice;
 
-            if(choice == 1) {
-                // Retrieves the response from a txt file after receiving response from server
-                string responseFilename = sendHttpRequest(parsedHttp,buffer);
-                ifstream t(responseFilename);
-                string str((istreambuf_iterator<char>(t)),
-                    istreambuf_iterator<char>());
-            } else if(choice == 2) {
+            if (choice == 2) {
                 string filename = strcpy((char *) &filename, (char *) &parsedHttp.url);
                 replace( filename.begin(), filename.end(), '/', '_');
                 filename = "./requests/" + filename;
                 system(("nano "+filename).c_str());
             }
 
-            
-
-            cout << "RESPONSE" << endl;
-            //cout << str << endl;
-
-
+            if(!isCached(parsedHttp.url)) {
+                cout << "[PROXY] Proxy does not have request cached. Sending request to server ..." << endl;
+                sendHttpRequest(parsedHttp,buffer);
+                cout << "[PROXY] Response has been cached. Sending response to client ..." << endl;
+            } else {
+                cout << "[PROXY] Request is cached. Sending to client ..." << endl;
+            }
+            replace( parsedHttp.url.begin(), parsedHttp.url.end(), '/', '_');
+            ifstream t(parsedHttp.url);
+            string str((istreambuf_iterator<char>(t)), istreambuf_iterator<char>());
+            send(clientSocket , str.c_str() , strlen(str.c_str()) , 0 );
+            cout << "Data sent to client" << endl;
+            // cout << str << endl;
+            // saveToFile(buffer, 1, parsedHttp);
             // cout << "PARSED REQUEST: " << endl;
             // cout << requestParsed.host << endl;
-
-            // if (!isCached(parsedHttp.url)) {
-            //     cout << "[PROXY] Request not cached. Sending request to server... " << endl;
-            //     string teste = sendHttpRequest(parsedHttp,buffer);
-            // } else {
-            //     cout << "[PROXY] Request found in cache. Responding to client ... " << endl;
-            // }
             
             close(clientSocket);
         } else {
