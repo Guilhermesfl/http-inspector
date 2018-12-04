@@ -89,7 +89,7 @@ string sendHttpRequest(httpParsed request, string bufferRequest) {
     if(write(clientSocket, newRequest, strlen(newRequest)) <= 0) cout << "ERROR writing on socket" << endl;
 
     replace( request.url.begin(), request.url.end(), '/', '_');
-    httpResponse = fopen(request.url.c_str(),"w+");
+    httpResponse = fopen(("responses/"+request.url).c_str(),"w+");
     if(!httpResponse) cout << "ERROR while creating file" << endl;
 
     bzero(buffer, sizeof(buffer));
@@ -125,9 +125,9 @@ void saveToFile(string toSave, int type, httpParsed parsedHttp) {
     replace( parsedHttp.url.begin(), parsedHttp.url.end(), '/', '_');
 
 	if (type == 1) {
-		fp = fopen(parsedHttp.url.c_str(),"w+");
+		fp = fopen(("requests/"+parsedHttp.url).c_str(),"w+");
 	} else if (type == 2) {
-		fp = fopen(parsedHttp.url.c_str(),"w+");
+		fp = fopen(("responses/"+parsedHttp.url).c_str(),"w+");
 	}
 
 	fputs(string, fp);
@@ -140,7 +140,7 @@ bool isCached(string requestUrl) {
     FILE * fp;
 
     replace( requestUrl.begin(), requestUrl.end(), '/', '_');
-    fp = fopen(requestUrl.c_str(),"r");
+    fp = fopen(("responses/"+requestUrl).c_str(),"r");
     
     if (fp) {
     	fclose(fp);

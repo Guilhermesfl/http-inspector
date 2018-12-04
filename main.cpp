@@ -2,6 +2,7 @@
 #include <iostream>
 #include "aracne.hpp"
 #include <stdlib.h>
+#include <stdio.h>
 #include <unistd.h>
 #include <sys/socket.h> 
 #include <sys/types.h>
@@ -11,6 +12,9 @@
 #include <netdb.h>
 #include <fstream>
 #include <streambuf>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <algorithm>
 #define PROXY_PORT 8228
 
 using namespace std;
@@ -22,6 +26,9 @@ int main(int argc, char const *argv[])
     char buffer[4096];
     struct sockaddr_in proxyAddr, cli_addr;
     httpParsed parsedHttp;
+
+    mkdir("requests", S_IRUSR | S_IWUSR | S_IXUSR);
+    mkdir("responses", S_IRUSR | S_IWUSR | S_IXUSR);
 
 
     if(argv[1] && argv[2]) {
@@ -51,6 +58,7 @@ int main(int argc, char const *argv[])
     cout << "Socket has been cofigured" << endl;
 
     string c = "n";
+    int choice = 1;
     while(1)
     {   
         if (c == "n") {
@@ -77,15 +85,32 @@ int main(int argc, char const *argv[])
 
             parsedHttp = parseHttp(buffer);
 
-            // saveToFile(buffer, 1, parsedHttp);
+            // Saves the request to a txt file
+            saveToFile(buffer, 1, parsedHttp);
 
-            string filename = sendHttpRequest(parsedHttp,buffer);
-            ifstream t(filename);
-            string str((istreambuf_iterator<char>(t)),
-                istreambuf_iterator<char>());
+            cout << "CHOOSE WHAT TO DO WITH THE REQUEST:" << endl;
+            cout << "1- Send without editing" << endl;
+            cout << "2- Edit then send" << endl;
+
+            cin >> choice;
+
+            if(choice == 1) {
+                // Retrieves the response from a txt file after receiving response from server
+                string responseFilename = sendHttpRequest(parsedHttp,buffer);
+                ifstream t(responseFilename);
+                string str((istreambuf_iterator<char>(t)),
+                    istreambuf_iterator<char>());
+            } else if(choice == 2) {
+                string filename = strcpy((char *) &filename, (char *) &parsedHttp.url);
+                replace( filename.begin(), filename.end(), '/', '_');
+                filename = "./requests/" + filename;
+                system(("nano "+filename).c_str());
+            }
+
             
+
             cout << "RESPONSE" << endl;
-            cout << str << endl;
+            //cout << str << endl;
 
 
             // cout << "PARSED REQUEST: " << endl;
