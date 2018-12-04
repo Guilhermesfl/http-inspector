@@ -144,18 +144,36 @@ void spider(string filename, string hostname) {
     
     unsigned int currrentLine = 0;
     string line;
-    ifstream t("responses/" + filename);
-    cout << filename << " and " << hostname << endl;
-    if (t) {
-        while(getline(t, line)) { 
+    ifstream fp("responses/" + filename);
+    FILE *dumpFile = fopen(("spider/" + filename).c_str(),"w+");
+    string host = "http://" + hostname + "\n";
+    if (fp && dumpFile) {
+        fputs(host.c_str(), dumpFile);
+        while(getline(fp, line)) { 
             // cout << line << endl;
             currrentLine++;
             if (line.find("http://" + hostname, 0) !=string::npos) {
-                // cout << "found: " << hostname << "line: " << currrentLine << endl;
+                int pos = line.find("http://" + hostname, 0), i = 0;
+                string href;
+                int end = 0;
+                for(char& c : line) {
+                    if(i >= pos && c != ' ') {
+                        href = href + c;
+                        i++;
+                    }
+                    if ( i >= pos && c == ' ') {
+                        href = href.substr(0, href.size()-1) + "\n";
+                        break;
+                    }
+                    i++;
+                }
+                fputs(href.c_str(), dumpFile);
             }
         }
+        cout << "[SPIDER] Spider finished!" << endl;
+        fp.close();
+        fclose(dumpFile);
     } else {
-        cout << "[DUMP] Dump error! Could not open response file!" << endl;
+        cout << "[SPIDER] SPIDER error! Could not open files!" << endl;
     }
-    cout << "[DUMP] Finished dumping!" << endl;
 }

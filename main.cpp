@@ -29,6 +29,7 @@ int main(int argc, char const *argv[])
 
     mkdir("requests", S_IRUSR | S_IWUSR | S_IXUSR);
     mkdir("responses", S_IRUSR | S_IWUSR | S_IXUSR);
+    mkdir("spider", S_IRUSR | S_IWUSR | S_IXUSR);
 
 
     if(argv[1] && argv[2]) {
@@ -74,7 +75,10 @@ int main(int argc, char const *argv[])
             else cout << "ERROR on accept" << endl;
 
             int n = recv(clientSocket, buffer, 4096, 0);
-            if (n <= 0) cout << "[PROXY ] Error receiving request from socket" << endl;;
+            if (n <= 0) {
+                cout << "[PROXY ] Error receiving request from socket" << endl;
+                break;
+            }
             
             cout << "[PROXY] Request received: " << endl;
             cout << buffer << endl;
@@ -135,8 +139,6 @@ int main(int argc, char const *argv[])
                 replace( filename.begin(), filename.end(), '/', '_');
                 spider(filename, parsedHttp.host);
             }
-            
-            
             close(clientSocket);
         } else {
             break;
