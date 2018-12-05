@@ -98,7 +98,7 @@ void sendHttpRequest(httpParsed request, string bufferRequest) {
        	fputs(buffer, httpResponse);
        	bzero(buffer, sizeof(buffer));
     }
-    cout << "[PROXY] Response received" << endl;
+    cout << endl << "[PROXY] Response received" << endl;
     close(clientSocket);
     fclose(httpResponse);
 
@@ -142,38 +142,49 @@ bool isCached(string requestUrl) {
 
 void spider(string filename, string hostname) {
     
+
+    getPageHref(filename, hostname);
+    // if (fp && dumpFile) {
+    //     fputs(host.c_str(), dumpFile);
+    //     cout << "[SPIDER] Spider finished!" << endl;
+    //     fp.close();
+    //     fclose(dumpFile);
+    // } else {
+    //     cout << "[SPIDER] SPIDER error! Could not open files!" << endl;
+    // }
+}
+
+void getPageHref(string filename, string hostname) {
     unsigned int currrentLine = 0;
     string line;
-    ifstream fp("responses/" + filename);
-    FILE *dumpFile = fopen(("spider/" + filename).c_str(),"w+");
-    string host = "http://" + hostname + "\n";
-    if (fp && dumpFile) {
-        fputs(host.c_str(), dumpFile);
-        while(getline(fp, line)) { 
-            // cout << line << endl;
+    fstream requestFile;
+    ofstream spiderFile;
+    requestFile.open("responses/" + filename); 
+    spiderFile.open("spider/" + filename); 
+    if (requestFile.is_open() && spiderFile.is_open()) {
+        while(getline(requestFile, line)) { 
             currrentLine++;
-            if (line.find("http://" + hostname, 0) !=string::npos) {
-                int pos = line.find("http://" + hostname, 0), i = 0;
+            if (line.find("href=", 0) != string::npos) {
+                int pos = line.find(hostname, 0), i = 0;
                 string href;
                 int end = 0;
                 for(char& c : line) {
-                    if(i >= pos && c != ' ') {
+                    if(i >= pos && c != '"') {
                         href = href + c;
                         i++;
                     }
-                    if ( i >= pos && c == ' ') {
-                        href = href.substr(0, href.size()-1) + "\n";
+                    if ( i >= pos && c == '"') {
+                        href = href.substr(0, href.size()-1);
+                        spiderFile << href << endl;
                         break;
                     }
                     i++;
                 }
-                fputs(href.c_str(), dumpFile);
             }
         }
-        cout << "[SPIDER] Spider finished!" << endl;
-        fp.close();
-        fclose(dumpFile);
     } else {
-        cout << "[SPIDER] SPIDER error! Could not open files!" << endl;
+        cout << "Error opening response file" << endl;
     }
+
+    requestFile.close();
 }

@@ -30,6 +30,7 @@ int main(int argc, char const *argv[])
     mkdir("requests", S_IRUSR | S_IWUSR | S_IXUSR);
     mkdir("responses", S_IRUSR | S_IWUSR | S_IXUSR);
     mkdir("spider", S_IRUSR | S_IWUSR | S_IXUSR);
+    mkdir("dumps", S_IRUSR | S_IWUSR | S_IXUSR);
 
 
     if(argv[1] && argv[2]) {
@@ -112,6 +113,7 @@ int main(int argc, char const *argv[])
             } else {
                 cout << "[PROXY] Request is cached. Sending to client ..." << endl;
             }
+            
             replace( parsedHttp.url.begin(), parsedHttp.url.end(), '/', '_');
 
             cout << "[PROXY] CHOOSE WHAT TO DO WITH THE RESPONSE:" << endl;
