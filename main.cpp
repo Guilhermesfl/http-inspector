@@ -15,6 +15,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <algorithm>
+#include <vector>
 #define PROXY_PORT 8228
 
 using namespace std;
@@ -61,6 +62,15 @@ int main(int argc, char const *argv[])
 
     string c = "n";
     int choice = 1;
+
+    int tr=1;
+
+    // kill "Address already in use" error message
+    if (setsockopt(proxySocket,SOL_SOCKET,SO_REUSEADDR,&tr,sizeof(int)) == -1) {
+        perror("setsockopt");
+        exit(1);
+    }
+
     while(1)
     {   
         if (c == "n") {
@@ -139,7 +149,10 @@ int main(int argc, char const *argv[])
             } else {
                 string filename = parsedHttp.url;
                 replace( filename.begin(), filename.end(), '/', '_');
-                spider(filename, parsedHttp.host);
+                vector<string> references;
+                references.push_back("http://" + parsedHttp.host + "/");
+                cout << "[SPIDER] Running..." << endl;
+                spider(filename, parsedHttp.host, 1, 0, references);
             }
             close(clientSocket);
         } else {
@@ -147,7 +160,7 @@ int main(int argc, char const *argv[])
         }
         cin >> c;
     }
-    
+
     close(proxySocket);
 
     return 0;
