@@ -23,9 +23,7 @@ int main(int argc, char const *argv[])
     proxy webProxy;
     // spider *webSpider;
     // dumper *webDumper;
-    int selectedPort = PROXY_PORT;
-    socklen_t clilen;
-    char buffer[4096];
+    int selectedPort = PROXY_PORT, choice;
     httpParsed parsedHttp;
 
     if(argv[1] && argv[2]) {
@@ -37,39 +35,15 @@ int main(int argc, char const *argv[])
     // Configure proxy cache and client socket
     webProxy.createCache();
     webProxy.createSocket(selectedPort);
+    webProxy.acceptConnection();
     // Configure spider cache
     // webSpider->createCache();
     // Configure dumper cache
     // webDumper->createCache();
-
-    // while(1)
-    // {   
-    //     if (c == "n") {
-    //         httpParsed requestParsed;
-    //         listen(proxySocket,10);
-    //         cout << "[PROXY] Socket listening..." << endl;
-
-    //         // The accept() call actually accepts an incoming connection
-    //         clilen = sizeof(cli_addr);
-    //         clientSocket = accept(proxySocket, (struct sockaddr *) &cli_addr, &clilen);
-
-    //         if (clientSocket > 0) cout << "[PROXY] Received connection..." << endl;
-    //         else cout << "ERROR on accept" << endl;
-
-    //         int n = recv(clientSocket, buffer, 4096, 0);
-    //         if (n <= 0) {
-    //             cout << "[PROXY ] Error receiving request from socket" << endl;
-    //             break;
-    //         }
-    //         parsedHttp = parseHttp(buffer);
-            
-
-
-
-            
-    //         cout << "[PROXY] Request received: " << endl;
-    //         cout << buffer << endl;
-    //         saveToFile(buffer, 1, parsedHttp);
+    string c = "n";
+    while(1) {   
+        if (c == "n") {
+            webProxy.acceptConnection();
     //         cout << "[PROXY] CHOOSE WHAT TO DO WITH THE REQUEST:" << endl;
     //         cout << "1- Send without editing" << endl;
     //         cout << "2- Edit then send" << endl;
@@ -130,11 +104,11 @@ int main(int argc, char const *argv[])
     //             spider(filename, parsedHttp.host, choice, 0, references, spiderFile);
     //         }
     //         close(clientSocket);
-    //     } else {
-    //         break;
-    //     }
-    //     cin >> c;
-    // }
+            cin >> c;
+        } else {
+            break;
+        }
+    }
 
     close(webProxy.serverSocket);
 

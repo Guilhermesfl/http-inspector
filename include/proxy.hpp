@@ -21,14 +21,18 @@ class httpParsed {
 class proxy {
     private:
     public:
+        char buffer[4096];
         int serverSocket, clientSocket;
+        httpParsed parsedRequest;
         struct sockaddr_in proxyAddr, cli_addr;
+        socklen_t clilen;
         void createSocket(int);
         void createCache();
-        httpParsed parseHttp(string);
+        void acceptConnection();
+        void parseHttp();
         void sendHttpRequest(httpParsed, string);
         bool isCached(string);
-        void saveInCache(string, int, httpParsed);
+        void saveInCache(int);
         proxy();
         ~proxy();
         

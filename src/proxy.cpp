@@ -17,27 +17,54 @@ proxy::proxy() {
 
 proxy::~proxy() {}
 
+
+/**
+ * Creates a server socket to listen for connections
+ * */
 void proxy::createSocket (int selectedPort) {
     this->serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (this->serverSocket > 0) cout << "[PROXY] Server socket created on port: " << selectedPort << endl;
-    else cout << "[PROXY] Error creating server socket" << endl;
-
-    // Bind socket to the port 8228
-    if (::bind(this->serverSocket, (struct sockaddr *)&this->proxyAddr, sizeof(this->proxyAddr)) != -1) cout << "[PROXY] Socket successfully binded" << endl;
-    else cout << "[PROXY] Error when binding socket" << endl;
-
-    cout << "[PROXY] Socket has been cofigured" << endl;
-
-    string c = "n";
-    int choice = 1;
-
-    int tr=1;
-
-    // kill "Address already in use" error message
+    else {
+		cout << "[PROXY] Error creating server socket" << endl;
+		return;
+	}
+	int tr=1;
+	// kill "Address already in use" error message
     if (setsockopt(this->serverSocket,SOL_SOCKET,SO_REUSEADDR,&tr,sizeof(int)) == -1) {
         perror("setsockopt");
         exit(1);
     }
+
+    // Bind socket to the port 8228
+    if (::bind(this->serverSocket, (struct sockaddr *)&this->proxyAddr, sizeof(this->proxyAddr)) != -1) cout << "[PROXY] Socket successfully binded" << endl;
+    else {
+		cout << "[PROXY] Error when binding socket" << endl;
+		return;
+	}
+
+    cout << "[PROXY] Socket has been cofigured" << endl;
+	cout << "[PROXY] Socket listening ..." << endl;
+	listen(this->serverSocket, 1);
+}
+
+void proxy::acceptConnection () {
+	        
+	// The accept() call actually accepts an incoming connection
+	this->clilen = sizeof(this->cli_addr);
+	this->clientSocket = accept(this->serverSocket, (struct sockaddr *) &this->cli_addr, &this->clilen);
+
+	if (this->clientSocket > 0) cout << "[PROXY] Received connection..." << endl;
+	else cout << "ERROR on accept" << endl;
+
+	int n = recv(this->clientSocket, this->buffer, 4096, 0);
+	if (n <= 0) {
+		cout << "[PROXY ] Error receiving request from socket" << endl;
+		return;
+	}
+	cout << "[PROXY] Request received: " << endl;
+	cout << buffer << endl;
+	this->parseHttp();
+	this->saveInCache(1);
 }
 
 /**
@@ -68,19 +95,18 @@ bool proxy::isCached(string requestUrl) {
 /**
  * Saves response or request to a file
  * */
-void proxy::saveInCache(string data, int type, httpParsed parsedHttp) {
+void proxy::saveInCache(int type) {
 	ofstream fp;
-	const char *string = data.c_str();
 
-	replace( parsedHttp.url.begin(), parsedHttp.url.end(), '/', '_');
+	replace( this->parsedRequest.url.begin(), this->parsedRequest.url.end(), '/', '_');
 
 	if (type == 1) {
-		fp.open("../requests/" + parsedHttp.url);
+		fp.open("../requests/" + this->parsedRequest.url);
 	} else if (type == 2) {
-		fp.open("../responses/" + parsedHttp.url);
+		fp.open("../responses/" + this->parsedRequest.url);
 	}
 
-	fp << string;
+	fp << this->buffer;
 	fp.close();
 }
 
@@ -89,28 +115,25 @@ void proxy::saveInCache(string data, int type, httpParsed parsedHttp) {
  * Parses Http to extrat some fields
  * 
  * */
-httpParsed proxy::parseHttp (string bufferRequest) {
+void proxy::parseHttp () {
 
 	// FILE * request;
 	char c, hostURL[150];
 	char * hostPosition;
 	string method, url, httpVersion, host;
-	httpParsed parsedRequest;
 
-	istringstream buf(bufferRequest);
+	istringstream buf(this->buffer);
 	istream_iterator<string> beg(buf), end;
 	vector<string> tokens(beg, end);
 	int i = 0;
 	for(auto& s: tokens) {
-		if (i == 0) parsedRequest.method = s;
-		else if (i == 1) parsedRequest.url = s;
-		else if (i == 2) parsedRequest.httpVersion = s;
-		else if (i == 4) parsedRequest.host = s;
+		if (i == 0) this->parsedRequest.method = s;
+		else if (i == 1) this->parsedRequest.url = s;
+		else if (i == 2) this->parsedRequest.httpVersion = s;
+		else if (i == 4) this->parsedRequest.host = s;
 		else if (i > 4) break;
 		i++;
 	}
-
-	return parsedRequest;
 }
 
 /**
