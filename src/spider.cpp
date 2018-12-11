@@ -18,7 +18,7 @@ void spider::createCache () {
 /**
  * Spider function
  * */
-void spider::run(string filename, string hostname, int treeHeight, int actualHeight) {
+void spider::run(string filename, string hostname, int treeHeight, int actualHeight, int type) {
 	string url = filename;
 	replace( url.begin(), url.end(), '_', '/');
 	vector<string> references;
@@ -77,7 +77,7 @@ int spider::searchLineReference(string searchString, int offset, string line, in
 			}
 		}
 		if (value.find("http://" + hostname) != string::npos || line[pos+offset] == '/') {
-			if (line[pos+offset] == '/') value = "http://" + hostname + value;
+			if (line[pos+offset] != '/') value = value.substr(7 + hostname.length(), value.length());
 			int hasValue = 0;
 			for(int i = 0; i < references.size() ; i++)
 			{
@@ -96,7 +96,7 @@ int spider::searchLineReference(string searchString, int offset, string line, in
 				&& value.find(".ico") == string::npos && value.find(".gif") == string::npos
 				&& value.find(".js") == string::npos && value.find(".css") == string::npos) {
 					replace( value.begin(), value.end(), '/', '_');
-					this->run(value, hostname, treeHeight, actualHeight+1);
+					this->run(value, hostname, treeHeight, actualHeight+1, 0);
 				}
 				
 			}

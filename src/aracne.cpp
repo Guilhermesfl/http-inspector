@@ -1,5 +1,5 @@
 #define _BSD_SOURCE
-// #include "dumper.hpp"
+#include "../include/dumper.hpp"
 #include "../include/spider.hpp"
 #include "../include/proxy.hpp"
 #include <unistd.h>
@@ -23,7 +23,7 @@ int main(int argc, char const *argv[])
     proxy webProxy;
     spider webSpider;
     string filename;
-    // dumper *webDumper;
+    dumper webDumper;
     int selectedPort = PROXY_PORT, choice, c = 1;
     httpParsed parsedHttp;
 
@@ -39,7 +39,7 @@ int main(int argc, char const *argv[])
     // Configure spider cache
     webSpider.createCache();
     // Configure dumper cache
-    // webDumper->createCache();
+    webDumper.createCache();
     while(1) {
         if (c) {
             cout << "[PROXY] Waiting for connection..." << endl;
@@ -81,14 +81,27 @@ int main(int argc, char const *argv[])
                     cout << "[SPIDER] Input tree height: ";
                     cin >> choice;
                     cout << "[SPIDER] Running..." << endl;
-                    // webSpider.spiderFile << webSpider.references[0] << endl;
                     webSpider.spiderFile.open("../spider/" + filename);
-                    webSpider.spiderFile << webProxy.parsedRequest.url << endl;
+                    string aux = webProxy.parsedRequest.url;
+                    for(int i = 7; i < aux.length(); i++)
+                    {
+                        if (aux[i] == '/') {
+                            aux = aux.substr(i, aux.length() - 1);
+                            break;
+                        }
+                    }
+                    webSpider.spiderFile << aux << endl;
                     webSpider.proxyRef = &webProxy;
-                    webSpider.run(filename, webProxy.parsedRequest.host, choice, 0);
+                    webSpider.run(filename, webProxy.parsedRequest.host, choice, 0, 0);
+                    webSpider.spiderFile.close();
                     cout << "[SPIDER] Finished running... Check the file under spider folder to see result!" << endl;
                 } else {
-                    // DO NOTHING
+                    cout << "[DUMPER] Running..." << endl;
+                    webDumper.createDumpDir(webProxy.parsedRequest.host);
+                    webDumper.spiderFile.open("../spider/" + filename);
+                    webDumper.run(webProxy.parsedRequest.host);
+                    webSpider.spiderFile.close();
+                    cout << "[SPIDER] Finished running... Check the dumps folder to see result!" << endl;
                 }
                 close(webProxy.clientSocket);
             } else {

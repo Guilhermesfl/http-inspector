@@ -198,7 +198,6 @@ void proxy::sendHttpRequest(string filename, string hostname) {
 			path = path.substr(i, path.length() - 1);
 			break;
 		}
-		
 	}
 	path = "GET " + path + " HTTP/1.1\r\nHost: " + hostname + "\r\n\r\n\r\n";
 	if(write(this->clientSocket, path.c_str(), path.length()) <= 0) cout << "ERROR writing on socket" << endl;
