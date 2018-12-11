@@ -58,7 +58,7 @@ int main(int argc, char const *argv[])
 
                 if(!webProxy.isCached()) {
                     cout << "[PROXY] Proxy does not have response cached. Sending request to server ..." << endl;
-                    webProxy.sendHttpRequest(webProxy.parsedRequest.url, webProxy.parsedRequest.host);
+                    webProxy.sendHttpRequest(webProxy.parsedRequest.url, webProxy.parsedRequest.host, 1);
                 } else {
                     cout << "[PROXY] Response is cached. Sending to client ..." << endl;
                 }
@@ -67,6 +67,7 @@ int main(int argc, char const *argv[])
                 cout << "2 - Edit then send" << endl;
                 cout << "3 - Run SPIDER" << endl;
                 cout << "4 - Run DUMPER" << endl;
+                cout << "CHOICE: ";
                 cin >> choice;
                 
                 filename = webProxy.parsedRequest.url;
@@ -83,8 +84,7 @@ int main(int argc, char const *argv[])
                     cout << "[SPIDER] Running..." << endl;
                     webSpider.spiderFile.open("../spider/" + filename);
                     string aux = webProxy.parsedRequest.url;
-                    for(int i = 7; i < aux.length(); i++)
-                    {
+                    for(int i = 7; i < aux.length(); i++) {
                         if (aux[i] == '/') {
                             aux = aux.substr(i, aux.length() - 1);
                             break;
@@ -98,6 +98,7 @@ int main(int argc, char const *argv[])
                 } else {
                     cout << "[DUMPER] Running..." << endl;
                     webDumper.createDumpDir(webProxy.parsedRequest.host);
+                    webDumper.hostname = webProxy.parsedRequest.host;
                     webDumper.spiderFile.open("../spider/" + filename);
                     webDumper.run(webProxy.parsedRequest.host);
                     webSpider.spiderFile.close();

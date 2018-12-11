@@ -9,6 +9,7 @@ class dumper
     private:
     public:
         fstream spiderFile;
+        string hostname;
         void createCache();
         void createDumpDir(string);
         void dump(string, string);

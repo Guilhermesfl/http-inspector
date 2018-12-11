@@ -25,7 +25,7 @@ void spider::run(string filename, string hostname, int treeHeight, int actualHei
 	references.push_back(url);
 	if (actualHeight < treeHeight){
 		fstream responseFile;
-		this->proxyRef->sendHttpRequest(filename, hostname);
+		this->proxyRef->sendHttpRequest(filename, hostname, 1);
 		responseFile.open("../responses/" + filename);
 		if(responseFile.is_open()) {
 			getPageReference(filename, hostname, actualHeight, treeHeight, responseFile, references);

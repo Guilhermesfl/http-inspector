@@ -63,7 +63,7 @@ void proxy::acceptConnection () {
 		return;
 	}
 	cout << "[PROXY] Request received: " << endl;
-	cout << buffer << endl;
+	cout << "\e[32m" << buffer  << "\e[0m" << endl;
 	this->parseHttp();
 	this->saveInCache(1);
 }
@@ -120,12 +120,12 @@ void proxy::editHttp(int type) {
 	string cmd;
 	replace( filename.begin(), filename.end(), '/', '_');
 	
-	if (type) cmd = "vim ../requests/" + filename; 
+	if (type == 1) cmd = "vim ../requests/" + filename; 
 	else cmd = "vim ../responses/" + filename;
 	const char *c = cmd.c_str();
 		
 	system(c);
-	if (type) t.open("../requests/" + filename);
+	if (type == 1) t.open("../requests/" + filename);
 	else t.open("../responses/" + filename);
 
 	string str((istreambuf_iterator<char>(t)), istreambuf_iterator<char>());
@@ -164,7 +164,7 @@ void proxy::parseHttp () {
  * Sends http GET request to server
  * 
  * */
-void proxy::sendHttpRequest(string filename, string hostname) {
+void proxy::sendHttpRequest(string filename, string hostname, int type) {
 	FILE * httpResponse;
 
 	this->clientSocket = socket(AF_INET, SOCK_STREAM, 0);
@@ -201,8 +201,12 @@ void proxy::sendHttpRequest(string filename, string hostname) {
 	}
 	path = "GET " + path + " HTTP/1.1\r\nHost: " + hostname + "\r\n\r\n\r\n";
 	if(write(this->clientSocket, path.c_str(), path.length()) <= 0) cout << "ERROR writing on socket" << endl;
-	replace( filename.begin(), filename.end(), '/', '_');
-	httpResponse = fopen(("../responses/" + filename).c_str(),"w+");
+	if (type == 1) {
+		replace( filename.begin(), filename.end(), '/', '_');
+		httpResponse = fopen(("../responses/" + filename).c_str(),"w+");
+	} else {
+		httpResponse = fopen((filename).c_str(),"w+");
+	}
 
 	if(!httpResponse) cout << "[PROXY] ERROR while creating file" << endl;
 
@@ -215,7 +219,7 @@ void proxy::sendHttpRequest(string filename, string hostname) {
 	   	fputs(this->buffer, httpResponse);
 	   	bzero(this->buffer, sizeof(this->buffer));
 	}
-	cout << endl << "[PROXY] Response received" << endl;
+	cout << endl << "[PROXY] Response received" << endl << endl;
 	
 	close(this->clientSocket);	
 	fclose(httpResponse);

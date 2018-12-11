@@ -32,7 +32,7 @@ class proxy {
         void createCache();
         void acceptConnection();
         void parseHttp();
-        void sendHttpRequest(string, string);
+        void sendHttpRequest(string, string, int);
         bool isCached();
         void saveInCache(int);
         void editHttp(int);

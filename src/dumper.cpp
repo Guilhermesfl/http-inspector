@@ -3,6 +3,7 @@
 #include <string.h>
 #include <fstream>
 #include "../include/dumper.hpp"
+#include "../include/proxy.hpp"
 #include <unistd.h>
 #include <algorithm>
 using namespace std;
@@ -21,6 +22,7 @@ void dumper::createDumpDir(string filename) {
 }
 
 void dumper::run(string filename) {
+    proxy webProxy;
 	unsigned int currrentLine = 0, position = 0;
 	string line;
     int i = 0;
@@ -28,6 +30,12 @@ void dumper::run(string filename) {
         line.erase(std::remove(line.begin(), line.end(), ' '), line.end());
         this->dump(line, "../dumps/" + filename);
 	}
+    // fstream file;
+    // file.open("../dumps/" + filename + "/index.html",ios::out);
+    // if (file) {
+        webProxy.sendHttpRequest("../dumps/" + filename + "/index.html", this->hostname, 2);
+    //     file.close();
+    // }
 }
 
 void dumper::dump(string url, string filename) {
@@ -35,12 +43,10 @@ void dumper::dump(string url, string filename) {
     size_t n = std::count(url.begin(), url.end(), '/');
     if (n > 2) {
         string path = filename + this->getSubPath(url);
-        // cout << path;
         mkdir(path.c_str(), S_IRUSR | S_IWUSR | S_IXUSR);
         this->dump(this->getRemainingPath(url), path);
     } else if (n == 2) {
         string path = filename + this->getSubPath(url);
-        // cout << path;
         mkdir(path.c_str(), S_IRUSR | S_IWUSR | S_IXUSR);
         if (url[url.length() - 1] == '/') {
             file.open(filename + "/index.html",ios::out);
