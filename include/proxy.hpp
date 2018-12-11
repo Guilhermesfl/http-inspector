@@ -7,6 +7,7 @@
 #include <string.h>
 #include <stdio.h>
 #define PROXY_PORT 8228
+#define CLIENT_PORT 80
 
 using namespace std;
 
@@ -24,15 +25,17 @@ class proxy {
         char buffer[4096];
         int serverSocket, clientSocket;
         httpParsed parsedRequest;
-        struct sockaddr_in proxyAddr, cli_addr;
+        struct sockaddr_in proxyAddr, cli_addr, serverAddr;
         socklen_t clilen;
+        struct hostent *server;
         void createSocket(int);
         void createCache();
         void acceptConnection();
         void parseHttp();
-        void sendHttpRequest(httpParsed, string);
-        bool isCached(string);
+        void sendHttpRequest(string, string);
+        bool isCached();
         void saveInCache(int);
+        void editHttp(int);
         proxy();
         ~proxy();
         

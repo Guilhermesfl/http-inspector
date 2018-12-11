@@ -6,10 +6,10 @@ ODIR=obj
 LDIR =
 LIBS=
 
-_DEPS = proxy.hpp
+_DEPS = proxy.hpp spider.hpp
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
-_OBJ = aracne.o proxy.o  
+_OBJ = aracne.o proxy.o spider.o
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 $(ODIR)/%.o: %.cpp $(DEPS)

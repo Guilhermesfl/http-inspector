@@ -1,6 +1,6 @@
 #define _BSD_SOURCE
 // #include "dumper.hpp"
-// #include "spider.hpp"
+#include "../include/spider.hpp"
 #include "../include/proxy.hpp"
 #include <unistd.h>
 #include <sys/socket.h> 
@@ -21,9 +21,10 @@ using namespace std;
 int main(int argc, char const *argv[])
 {
     proxy webProxy;
-    // spider *webSpider;
+    spider webSpider;
+    string filename;
     // dumper *webDumper;
-    int selectedPort = PROXY_PORT, choice;
+    int selectedPort = PROXY_PORT, choice, c = 1;
     httpParsed parsedHttp;
 
     if(argv[1] && argv[2]) {
@@ -35,77 +36,67 @@ int main(int argc, char const *argv[])
     // Configure proxy cache and client socket
     webProxy.createCache();
     webProxy.createSocket(selectedPort);
-    webProxy.acceptConnection();
     // Configure spider cache
-    // webSpider->createCache();
+    webSpider.createCache();
     // Configure dumper cache
     // webDumper->createCache();
-    string c = "n";
-    while(1) {   
-        if (c == "n") {
+    while(1) {
+        if (c) {
+            cout << "[PROXY] Waiting for connection..." << endl;
             webProxy.acceptConnection();
-    //         cout << "[PROXY] CHOOSE WHAT TO DO WITH THE REQUEST:" << endl;
-    //         cout << "1- Send without editing" << endl;
-    //         cout << "2- Edit then send" << endl;
-
-    //         cin >> choice;
-
-    //         if (choice == 2) {
-    //             string filename = parsedHttp.url;
-    //             replace( filename.begin(), filename.end(), '/', '_');
-    //             string cmd = "vim requests/" + filename; 
-    //             const char *c = cmd.c_str();
-    //             system(c);
-    //             ifstream t("requests/" + filename);
-    //             string str((istreambuf_iterator<char>(t)), istreambuf_iterator<char>());
-    //             sprintf(buffer, "%.4s", str.c_str());
-    //         }
-
-    //         if(!isCached(parsedHttp.url)) {
-    //             cout << "[PROXY] Proxy does not have request cached. Sending request to server ..." << endl;
-    //             sendHttpRequest(parsedHttp,buffer);
-    //             cout << "[PROXY] Response has been cached. Sending response to client ..." << endl;
-    //         } else {
-    //             cout << "[PROXY] Request is cached. Sending to client ..." << endl;
-    //         }
-            
-    //         replace( parsedHttp.url.begin(), parsedHttp.url.end(), '/', '_');
-
-    //         cout << "[PROXY] CHOOSE WHAT TO DO WITH THE RESPONSE:" << endl;
-    //         cout << "1- Return to client without editing" << endl;
-    //         cout << "2- Edit then send" << endl;
-    //         cout << "3- SPIDER" << endl;
-
-    //         cin >> choice;
+            cout << "[PROXY] CHOOSE WHAT TO DO WITH THE REQUEST:" << endl;
+            cout << "1 - Send without editing" << endl;
+            cout << "2 - Edit then send" << endl;
+            cout << "3 - Block request" << endl;
+            cout << "CHOICE: ";
+            cin >> choice;
 
             
-    //         if (choice == 2 || choice == 1) {
-    //             if (choice == 2) {
-    //                 string filename = parsedHttp.url;
-    //                 replace( filename.begin(), filename.end(), '/', '_');
-    //                 string cmd = "vim responses/" + filename; 
-    //                 const char *c = cmd.c_str();
-    //                 system(c);
-    //             }
-    //             ifstream t("responses/" + parsedHttp.url);
-    //             string str((istreambuf_iterator<char>(t)), istreambuf_iterator<char>());
-    //             send(clientSocket , str.c_str() , strlen(str.c_str()) , 0 );
-    //             cout << "Data sent to client" << endl;
-    //         } else {
-    //             cout << "[PROXY] Input tree height: ";
-    //             cin >> choice;
-    //             vector<string> references;
-    //             string filename = parsedHttp.url;
-    //             references.push_back("http://" + parsedHttp.host + "/");
-    //             replace( filename.begin(), filename.end(), '/', '_');
-    //             cout << "[SPIDER] Running..." << endl;
-    //             ofstream spiderFile;
-    //             spiderFile.open("spider/" + filename);
-    //             spider(filename, parsedHttp.host, choice, 0, references, spiderFile);
-    //         }
-    //         close(clientSocket);
+            if (choice == 1 || choice == 2) {
+            
+                if (choice == 2) webProxy.editHttp(1);
+
+                if(!webProxy.isCached()) {
+                    cout << "[PROXY] Proxy does not have response cached. Sending request to server ..." << endl;
+                    webProxy.sendHttpRequest(webProxy.parsedRequest.url, webProxy.parsedRequest.host);
+                } else {
+                    cout << "[PROXY] Response is cached. Sending to client ..." << endl;
+                }
+                cout << "[PROXY] CHOOSE WHAT TO DO WITH THE RESPONSE:" << endl;
+                cout << "1 - Send without editing" << endl;
+                cout << "2 - Edit then send" << endl;
+                cout << "3 - Run SPIDER" << endl;
+                cout << "4 - Run DUMPER" << endl;
+                cin >> choice;
+                
+                filename = webProxy.parsedRequest.url;
+                replace( filename.begin(), filename.end(), '/', '_');
+                if (choice == 1 || choice == 2) {
+                    if (choice == 2) webProxy.editHttp(2);
+                    ifstream t(filename);
+                    string str((istreambuf_iterator<char>(t)), istreambuf_iterator<char>());
+                    send(webProxy.clientSocket , str.c_str() , strlen(str.c_str()), 0);
+                    cout << "[PROXY] Data sent to client" << endl;
+                } else if (choice == 3) {
+                    cout << "[SPIDER] Input tree height: ";
+                    cin >> choice;
+                    cout << "[SPIDER] Running..." << endl;
+                    // webSpider.spiderFile << webSpider.references[0] << endl;
+                    webSpider.spiderFile.open("../spider/" + filename);
+                    webSpider.spiderFile << webProxy.parsedRequest.url << endl;
+                    webSpider.proxyRef = &webProxy;
+                    webSpider.run(filename, webProxy.parsedRequest.host, choice, 0);
+                    cout << "[SPIDER] Finished running... Check the file under spider folder to see result!" << endl;
+                } else {
+                    // DO NOTHING
+                }
+                close(webProxy.clientSocket);
+            } else {
+                cout << "[PROXY] Proxy blocked request!" << endl;
+            }
             cin >> c;
         } else {
+            cout << "[PROXY] Received command to stop ... Goodbye!" << endl;
             break;
         }
     }

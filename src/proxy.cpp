@@ -1,7 +1,6 @@
 
 #include "../include/proxy.hpp"
 #include <sys/stat.h>
-#define CLIENT_PORT 80
 #include <fstream>
 #include <sstream>
 #include <vector>
@@ -44,12 +43,14 @@ void proxy::createSocket (int selectedPort) {
 
     cout << "[PROXY] Socket has been cofigured" << endl;
 	cout << "[PROXY] Socket listening ..." << endl;
-	listen(this->serverSocket, 1);
+	listen(this->serverSocket, 10);
 }
 
+/**
+ * Opens client socket to receive incoming connections
+ * */
 void proxy::acceptConnection () {
 	        
-	// The accept() call actually accepts an incoming connection
 	this->clilen = sizeof(this->cli_addr);
 	this->clientSocket = accept(this->serverSocket, (struct sockaddr *) &this->cli_addr, &this->clilen);
 
@@ -78,13 +79,13 @@ void proxy::createCache () {
 /**
  * Verifies if request has its response cached
  * */
-bool proxy::isCached(string requestUrl) {
+bool proxy::isCached() {
 	
 	ifstream fp;
-
-	replace( requestUrl.begin(), requestUrl.end(), '/', '_');
-	fp.open("../responses/" + requestUrl);
+	string filename = this->parsedRequest.url;
+	replace( filename.begin(), filename.end(), '/', '_');
 	
+	fp.open("../responses/" + filename);
 	if (fp) {
 		fp.close();
 		return true;
@@ -97,17 +98,39 @@ bool proxy::isCached(string requestUrl) {
  * */
 void proxy::saveInCache(int type) {
 	ofstream fp;
-
-	replace( this->parsedRequest.url.begin(), this->parsedRequest.url.end(), '/', '_');
+	string filename = this->parsedRequest.url;
+	replace( filename.begin(), filename.end(), '/', '_');
 
 	if (type == 1) {
-		fp.open("../requests/" + this->parsedRequest.url);
+		fp.open("../requests/" + filename);
 	} else if (type == 2) {
-		fp.open("../responses/" + this->parsedRequest.url);
+		fp.open("../responses/" + filename);
 	}
 
 	fp << this->buffer;
 	fp.close();
+}
+
+/**
+ * Saves response or request to a file
+ * */
+void proxy::editHttp(int type) {
+	ifstream t;
+	string filename = this->parsedRequest.url;
+	string cmd;
+	replace( filename.begin(), filename.end(), '/', '_');
+	
+	if (type) cmd = "vim ../requests/" + filename; 
+	else cmd = "vim ../responses/" + filename;
+	const char *c = cmd.c_str();
+		
+	system(c);
+	if (type) t.open("../requests/" + filename);
+	else t.open("../responses/" + filename);
+
+	string str((istreambuf_iterator<char>(t)), istreambuf_iterator<char>());
+	sprintf(this->buffer, "%.4s", str.c_str());
+	
 }
 
 /**
@@ -141,60 +164,60 @@ void proxy::parseHttp () {
  * Sends http GET request to server
  * 
  * */
-void proxy::sendHttpRequest(httpParsed request, string bufferRequest) {
-	int clientSocket;
-	char buffer[4096];
-	socklen_t clilen;
-	const char *c = request.host.c_str();
-	const char *bRequest = bufferRequest.c_str();
-	struct sockaddr_in serverAddress;
-	struct hostent *server;
+void proxy::sendHttpRequest(string filename, string hostname) {
 	FILE * httpResponse;
 
-	clientSocket = socket(AF_INET, SOCK_STREAM, 0);
-	if (clientSocket >= 0) cout << "[PROXY] Client socket created on port: " << CLIENT_PORT << endl; 
-	else cout << "ERROR opening socket" << endl;
-
-	server = gethostbyname(c);
-	if (server) cout << "[PROXY] Server identified..." << endl;
+	this->clientSocket = socket(AF_INET, SOCK_STREAM, 0);
+	if (this->clientSocket >= 0) cout << "[PROXY] Client socket created on port: " << CLIENT_PORT << endl; 
 	else {
-		fprintf(stderr,"ERROR, no such host\n");
+		cout << "[PROXY] ERROR opening socket" << endl;
+		return;
+	}
+	this->server = gethostbyname(hostname.c_str());
+	if (this->server) cout << "[PROXY] Server identified..." << endl;
+	else {
+		fprintf(stderr,"[PROXY] ERROR, no such host\n");
 		exit(0);
 	}
-	bzero((char *) &serverAddress, sizeof(serverAddress));
-	serverAddress.sin_family = AF_INET;
-	bcopy((char *)server->h_addr, 
-		 (char *)&serverAddress.sin_addr.s_addr,
-		 server->h_length);
-	serverAddress.sin_port = htons(CLIENT_PORT);
+	this->serverAddr.sin_family = AF_INET; 
+	bzero((char *) &this->serverAddr, sizeof(this->serverAddr));
+	bcopy((char *) this->server->h_addr, (char *)&this->serverAddr.sin_addr.s_addr, this->server->h_length);
+    this->serverAddr.sin_port = htons( CLIENT_PORT );
 
-	if (connect(clientSocket, (struct sockaddr *) &serverAddress, sizeof(serverAddress)) >= 0);
-	else cout << "[PROXY] Error connecting to server" << endl;
-
-	char newRequest[250] = "GET / HTTP/1.1\r\nHost: ";
-	strcat(newRequest, c);
-	strcat(newRequest, "\r\n\r\n\r\n");
-
-	if(write(clientSocket, newRequest, strlen(newRequest)) <= 0) cout << "ERROR writing on socket" << endl;
-
+	if (connect(this->clientSocket, (struct sockaddr *) &this->serverAddr, sizeof(this->serverAddr)) >= 0);
+	else {
+		cout << "[PROXY] Error connecting to server" << endl;
+		return;
+	}
+	string path = filename;
+	replace( path.begin(), path.end(), '_', '/');
 	
-	replace( request.url.begin(), request.url.end(), '/', '_');
-	httpResponse = fopen(("responses/"+request.url).c_str(),"w+");
+	for(int i = 7; i < path.length(); i++)
+	{
+		if (path[i] == '/') {
+			path = path.substr(i, path.length() - 1);
+			break;
+		}
+		
+	}
+	path = "GET " + path + " HTTP/1.1\r\nHost: " + hostname + "\r\n\r\n\r\n";
+	if(write(this->clientSocket, path.c_str(), path.length()) <= 0) cout << "ERROR writing on socket" << endl;
+	replace( filename.begin(), filename.end(), '/', '_');
+	httpResponse = fopen(("../responses/" + filename).c_str(),"w+");
 
-	if(!httpResponse) cout << "ERROR while creating file" << endl;
+	if(!httpResponse) cout << "[PROXY] ERROR while creating file" << endl;
 
-	bzero(buffer, sizeof(buffer));
+	bzero(this->buffer, sizeof(this->buffer));
 
 	cout << "[PROXY] Receiving response from server" << endl;
-	while(recv(clientSocket, buffer, 4095, 0) != 0) //atenção ao tamanho do buffer ***
+	while(recv(this->clientSocket, this->buffer, 4095, 0) != 0)
 	{
 		cout << ".";
-	   	fputs(buffer, httpResponse);
-	   	bzero(buffer, sizeof(buffer));
+	   	fputs(this->buffer, httpResponse);
+	   	bzero(this->buffer, sizeof(this->buffer));
 	}
 	cout << endl << "[PROXY] Response received" << endl;
 	
-	close(clientSocket);	
+	close(this->clientSocket);	
 	fclose(httpResponse);
-	
 }

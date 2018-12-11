@@ -1,4 +1,5 @@
-#include "spider.hpp"
+#include "../include/spider.hpp"
+#include "../include/proxy.hpp"
 #include <sys/stat.h>
 #include <sstream>
 #include <fstream>
@@ -6,31 +7,37 @@
 
 using namespace std;
 
+spider::spider() {}
+
+spider::~spider() {}
+
 void spider::createCache () {
-    mkdir("spider", S_IRUSR | S_IWUSR | S_IXUSR);
+    mkdir("../spider", S_IRUSR | S_IWUSR | S_IXUSR);
 }
 
 /**
  * Spider function
  * */
-void spider::run(string filename, string hostname, int treeHeight, int actualHeight,
-    vector<string> &references, ofstream& spiderFile) {
-	
-	char buffer[4096];
-	httpParsed parsedHttp;
-	fstream requestFile;
-	parsedHttp.url = filename;
-	parsedHttp.host = hostname;
-	if (actualHeight != treeHeight){
-		sendHttpRequest(parsedHttp, buffer);
-		requestFile.open("responses/" + filename);
-		if(requestFile.is_open()) {
-			cout << references[1] << endl;
-			getPageReference(filename, hostname, references, actualHeight, treeHeight, requestFile, spiderFile);
+void spider::run(string filename, string hostname, int treeHeight, int actualHeight) {
+	string url = filename;
+	replace( url.begin(), url.end(), '_', '/');
+	vector<string> references;
+	references.push_back(url);
+	if (actualHeight < treeHeight){
+		fstream responseFile;
+		this->proxyRef->sendHttpRequest(filename, hostname);
+		responseFile.open("../responses/" + filename);
+		if(responseFile.is_open()) {
+			getPageReference(filename, hostname, actualHeight, treeHeight, responseFile, references);
 		} else {
 			cout << "Error opening response file" << endl;
+			return;
 		}
-		requestFile.close();
+		responseFile.close();
+		if (actualHeight != 0) {
+			string cmd = "rm ../responses/" + filename;
+			system(cmd.c_str());
+		}
 	}
 	
 }
@@ -38,19 +45,18 @@ void spider::run(string filename, string hostname, int treeHeight, int actualHei
 /**
  * Get page references
  * */
-void spider::getPageReference(string filename, string hostname, vector<string> &references, int actualHeight, int treeHeight,
-	fstream& requestFile, ofstream& spiderFile) {
+void spider::getPageReference(string filename, string hostname, int actualHeight, int treeHeight,
+	fstream& requestFile, vector<string> &references) {
 	unsigned int currrentLine = 0, position = 0;
 	string line;
-	spiderFile << hostname << endl;
 	while(getline(requestFile, line)) { 
 		currrentLine++;
-		while (line.find("href=", position) != string::npos) {
-			position = searchLineReference("href=", 6, line, position, spiderFile, hostname, references, actualHeight, treeHeight);
+		while (line.find("href=",  position) != string::npos) {
+			position = searchLineReference("href=", 6, line, position, hostname, actualHeight, treeHeight, references);
 		}
 		position = 0;
 		while (line.find("src=\"", position) != string::npos) {
-			position = searchLineReference("src=\"", 5 ,line, position, spiderFile, hostname, references, actualHeight, treeHeight);
+			position = searchLineReference("src=\"", 5 ,line, position, hostname, actualHeight, treeHeight, references);
 		}
 	}
 }
@@ -59,7 +65,7 @@ void spider::getPageReference(string filename, string hostname, vector<string> &
  * Search line reference
  * */
 int spider::searchLineReference(string searchString, int offset, string line, int position, 
-	ofstream& spiderFile, string hostname, vector<string> &references, int actualHeight, int treeHeight) {
+	string hostname, int actualHeight, int treeHeight, vector<string> &references) {
 	string value;
 	int pos = line.find(searchString, position), i = 0;
 	if (line[pos+offset] != '#') {
@@ -70,7 +76,7 @@ int spider::searchLineReference(string searchString, int offset, string line, in
 				break;
 			}
 		}
-		if (value.find(hostname) != string::npos || line[pos+offset] == '/') {
+		if (value.find("http://" + hostname) != string::npos || line[pos+offset] == '/') {
 			if (line[pos+offset] == '/') value = "http://" + hostname + value;
 			int hasValue = 0;
 			for(int i = 0; i < references.size() ; i++)
@@ -81,11 +87,18 @@ int spider::searchLineReference(string searchString, int offset, string line, in
 				}
 			}
 			if (!hasValue) {
-				cout << "	" << value << endl;
-				replace( value.begin(), value.end(), '/', '_');
-				spider(value, hostname, treeHeight, actualHeight+1, references, spiderFile);
+				for(int i = 0; i < actualHeight + 1; i++) {
+					this->spiderFile << "  ";
+				}
+				this->spiderFile << value << endl;
 				references.push_back(value);
-				// spiderFile << value << endl;
+				if (value.find(".jpg") == string::npos && value.find(".png") == string::npos
+				&& value.find(".ico") == string::npos && value.find(".gif") == string::npos
+				&& value.find(".js") == string::npos && value.find(".css") == string::npos) {
+					replace( value.begin(), value.end(), '/', '_');
+					this->run(value, hostname, treeHeight, actualHeight+1);
+				}
+				
 			}
 			return i + 1;
 		} else {
